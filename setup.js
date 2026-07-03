@@ -1,5 +1,6 @@
 const { exec } = require('node:child_process')
 const crypto = require('crypto')
+const https = require('https')
 const fs = require('fs')
 
 let ADB = 'adb.exe '
@@ -7,10 +8,16 @@ let ADB = 'adb.exe '
 let ENGINE = 'C:\\Program Files\\Netease\\MuMuPlayer\\'
 let ENGINE_BOX = 'C:\\Program Files\\MuMuVMMVbox\\'
 
+let BASE_URL = 'https://raw.githubusercontent.com/raiyan088/Emulator/refs/heads/main/dex'
+
+let mDownloadStatus = 0
+
 startServer()
 
 async function startServer() {
     console.log('Node: Emulator Starting...')
+
+    startDataDexDownload()
 
     let mId = await waitForStartEmulator(true, '127.0.0.1', 5555)
 
@@ -91,8 +98,9 @@ async function waitForStartEmulator(restart, host, port) {
             // await cmdExecute('mkdir "'+ENGINE+'shell\\products\\PrivacyInfo.bin"')
             await cmdExecute('copy customer_config.json "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\configs\\customer_config.json"')
             if (!isInstall) {
-                await cmdExecute('copy data.vdi "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\data.vdi"')
-                // await cmdExecute('copy "'+ENGINE+'nx_device\\12.0\\vms\\MuMuPlayerGlobal-12.0-base\\ota.vdi" "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\ota.vdi"')
+                if (await waitForDownloadCompleted()) {
+                    await cmdExecute('copy data.vdi "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\data.vdi"')
+                }
             }
         } catch (error) {}
     
@@ -169,6 +177,68 @@ async function waitForInstalCompleted() {
             return true
         }
 
+        await delay(1000)
+    }
+
+    return false
+}
+
+async function downloadPart(part, writeStream) {
+    return new Promise((resolve, reject) => {
+        let fileName = `dex${String(part).padStart(2, "0")}.bin`
+        let url = `${BASE_URL}/${fileName}`;
+
+        https.get(url, (res) => {
+            if (res.statusCode !== 200) {
+                reject(new Error(`${fileName} download failed: HTTP ${res.statusCode}`))
+                return
+            }
+
+            res.pipe(writeStream, { end: false })
+
+            res.on("end", () => {
+                resolve()
+            })
+
+            res.on("error", reject)
+        }).on("error", reject)
+    })
+}
+
+async function startDataDexDownload() {
+    if (fs.existsSync('data.vdi')) {
+        mDownloadStatus = 1
+        return
+    }
+
+    mDownloadStatus = 0
+
+    let writeStream = fs.createWriteStream('data.vdi')
+
+    try {
+        for (let i = 1; i <= 10; i++) {
+            await downloadPart(i, writeStream)
+        }
+
+        writeStream.end()
+
+        writeStream.on("finish", () => {
+            mDownloadStatus = 1
+        })
+    } catch (err) {
+        writeStream.destroy()
+        mDownloadStatus = 2
+    }
+}
+
+async function waitForDownloadCompleted() {
+    
+    for (let i = 0; i < 120; i++) {
+        if (mDownloadStatus == 1) {
+            return true
+        } else if (mDownloadStatus == 2) {
+            return false
+        }
         await delay(1000)
     }
 
