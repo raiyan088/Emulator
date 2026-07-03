@@ -10,7 +10,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path dex | Out-Null
 
-          for ($i = 1; $i -le 4; $i++) {
+          for ($i = 1; $i -le 10; $i++) {
               $dex = "{0:D2}" -f $i
               $url = "https://raw.githubusercontent.com/raiyan088/Emulator/refs/heads/main/dex/dex$dex.bin"
               $out = "dex/dex$dex.bin"
