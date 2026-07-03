@@ -10,3 +10,6 @@ jobs:
 
       - name: Show Files
         run: dir
+      
+      - name: Show Dex Files
+        run: dir dex /s
