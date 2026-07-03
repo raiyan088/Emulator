@@ -5,19 +5,8 @@ jobs:
     runs-on: windows-2025
     steps:
     
-      - name: Download Parts
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path dex | Out-Null
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-          for ($i = 1; $i -le 10; $i++) {
-              $dex = "{0:D2}" -f $i
-              $url = "https://raw.githubusercontent.com/raiyan088/Emulator/refs/heads/main/dex/dex$dex.bin"
-              $out = "dex/dex$dex.bin"
-
-              Write-Host "Downloading $url"
-              Invoke-WebRequest $url -OutFile $out
-          }
-            
       - name: Show Dex Files
         run: Get-ChildItem . -Recurse
