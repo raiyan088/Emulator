@@ -22,6 +22,7 @@ async function startServer() {
     let mId = await waitForStartEmulator(true, '127.0.0.1', 5555)
 
     if (mId) {
+        await closeExtraWindow()
         console.log('Node: Device ID: '+mId)
         let connected = await waitForDeviceOnline(mId)
 
@@ -95,7 +96,6 @@ async function waitForStartEmulator(restart, host, port) {
             fs.writeFileSync('customer_config.json', await replaceConfig(config))
             if (!isInstall) await cmdExecute('rmdir /q /s -Recurse -Force -Confirm:$false "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0"')
             await cmdExecute('mkdir "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\configs"')
-            // await cmdExecute('mkdir "'+ENGINE+'shell\\products\\PrivacyInfo.bin"')
             await cmdExecute('copy customer_config.json "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\configs\\customer_config.json"')
             if (!isInstall) {
                 if (await waitForDownloadCompleted()) {
@@ -161,6 +161,11 @@ async function isInstallEmulator() {
     } catch (error) {}
 
     return false
+}
+
+async function closeExtraWindow() {
+    await cmdExecute(`powershell -Command "Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class Win32 { [DllImport(\"user32.dll\")] public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam); public const uint WM_CLOSE = 0x0010; }'; $p=Get-Process -Name MuMuNxMain -ErrorAction SilentlyContinue; if($p){[Win32]::PostMessage($p.MainWindowHandle,[Win32]::WM_CLOSE,[IntPtr]::Zero,[IntPtr]::Zero)}"`)
+    await cmdExecute(`powershell -Command "Add-Type -AssemblyName Microsoft.VisualBasic; Add-Type -AssemblyName System.Windows.Forms; $p=Get-Process -Name MuMuNxDevice -ErrorAction SilentlyContinue; if($p){[Microsoft.VisualBasic.Interaction]::AppActivate($p.Id); Start-Sleep -Milliseconds 300; [System.Windows.Forms.SendKeys]::SendWait('{F11}')}"`)
 }
 
 async function waitForInstalCompleted() {
