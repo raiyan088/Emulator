@@ -27,6 +27,7 @@ async function startServer() {
         let connected = await waitForDeviceOnline(mId)
 
         if (connected) {
+            await closeExtraWindow()
             console.log('Node: Connected Device: '+connected)
         }
     }
@@ -164,7 +165,8 @@ async function isInstallEmulator() {
 }
 
 async function closeExtraWindow() {
-    await cmdExecute(`powershell -Command "Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class Win32 { [DllImport(\"user32.dll\")] public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam); public const uint WM_CLOSE = 0x0010; }'; $p=Get-Process -Name MuMuNxMain -ErrorAction SilentlyContinue; if($p){[Win32]::PostMessage($p.MainWindowHandle,[Win32]::WM_CLOSE,[IntPtr]::Zero,[IntPtr]::Zero)}"`)
+    await cmdExecute(`powershell -Command "Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class Win32 { [DllImport(\"user32.dll\")] public static extern bool ShowWindow(IntPtr hWnd,int nCmdShow); [DllImport(\"user32.dll\")] public static extern bool SetForegroundWindow(IntPtr hWnd); }'; $p=Get-Process -Name MuMuNxDevice -ErrorAction SilentlyContinue; if($p){[Win32]::ShowWindow($p.MainWindowHandle,9); [Win32]::SetForegroundWindow($p.MainWindowHandle)}"`)
+    await delay(500)
     await cmdExecute(`powershell -Command "Add-Type -AssemblyName Microsoft.VisualBasic; Add-Type -AssemblyName System.Windows.Forms; $p=Get-Process -Name MuMuNxDevice -ErrorAction SilentlyContinue; if($p){[Microsoft.VisualBasic.Interaction]::AppActivate($p.Id); Start-Sleep -Milliseconds 300; [System.Windows.Forms.SendKeys]::SendWait('{F11}')}"`)
 }
 
