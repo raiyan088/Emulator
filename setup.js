@@ -223,7 +223,7 @@ async function startDataDexDownload() {
     let writeStream = fs.createWriteStream('data.vdi')
 
     try {
-        for (let i = 1; i <= 15; i++) {
+        for (let i = 1; i <= 7; i++) {
             await downloadPart(i, writeStream)
         }
 
