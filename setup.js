@@ -105,16 +105,18 @@ async function waitForStartEmulator(name, restart, host, port) {
         console.log('Node: Emulator Runing...')
     }
 
-    for (let i = 0; i < 120; i++) {
-        try {
-            let result = await cmdExecute(ADB+'connect '+host+':'+port)
-            if (result && (result.indexOf('connected to '+host+':'+port) > -1)) {
-                return host+':'+port
-            }
-        } catch (error) {}
+    // for (let i = 0; i < 120; i++) {
+    //     try {
+    //         let result = await cmdExecute(ADB+'connect '+host+':'+port)
+    //         if (result && (result.indexOf('connected to '+host+':'+port) > -1)) {
+    //             return host+':'+port
+    //         }
+    //     } catch (error) {}
 
-        await delay(1000)
-    }
+    //     await delay(1000)
+    // }
+
+    return null
 }
 
 async function waitForInstallEmulator(name) {
