@@ -22,12 +22,10 @@ async function startServer() {
     let mId = await waitForStartEmulator(NAME, true, '127.0.0.1', 5555)
 
     if (mId) {
-        await closeExtraWindow()
         console.log('Node: Device ID: '+mId)
         let connected = await waitForDeviceOnline(mId)
 
         if (connected) {
-            await closeExtraWindow()
             console.log('Node: Connected Device: '+connected)
         }
     }
@@ -87,17 +85,17 @@ async function waitForStartEmulator(name, restart, host, port) {
         await cmdExecute('taskkill /IM "HD-Player.exe" /T /F')
         await delay(1000)
     
-        // try {
-        //     let dixFile = '"'+ENGINE+'Engine\\'+name+'\\Data.vhdx"'
-        //     let bluestacks = fs.readFileSync('config.conf', 'utf-8')
-        //     let replaceAdId = await randomAdId(bluestacks)
-        //     fs.writeFileSync('bluestacks.conf', replaceAdId)
-        //     await cmdExecute('attrib -r "'+ENGINE+'bluestacks.conf"')
-        //     await cmdExecute('copy bluestacks.conf  "'+ENGINE+'bluestacks.conf"')
-        //     await cmdExecute('attrib +r "'+ENGINE+'bluestacks.conf"')
-        //     await cmdExecute('rm -f '+dixFile)
-        //     await cmdExecute('copy Data.vhdx '+dixFile)
-        // } catch (error) {}
+        try {
+            let dixFile = '"'+ENGINE+'Engine\\'+name+'\\Data.vhdx"'
+            let bluestacks = fs.readFileSync('config.conf', 'utf-8')
+            // let replaceAdId = await randomAdId(bluestacks)
+            fs.writeFileSync('bluestacks.conf', bluestacks)
+            await cmdExecute('attrib -r "'+ENGINE+'bluestacks.conf"')
+            await cmdExecute('copy bluestacks.conf  "'+ENGINE+'bluestacks.conf"')
+            await cmdExecute('attrib +r "'+ENGINE+'bluestacks.conf"')
+            await cmdExecute('rm -f '+dixFile)
+            await cmdExecute('copy Data.vhdx '+dixFile)
+        } catch (error) {}
     
         await delay(2000)
         cmdExecute('"'+ENGINE_PATH+'HD-Player.exe" --instance '+name)
@@ -167,12 +165,6 @@ async function isInstallEmulator() {
     return false
 }
 
-async function closeExtraWindow() {
-    await cmdExecute(`powershell -Command "Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class Win32 { [DllImport(\"user32.dll\")] public static extern bool ShowWindow(IntPtr hWnd,int nCmdShow); [DllImport(\"user32.dll\")] public static extern bool SetForegroundWindow(IntPtr hWnd); }'; $p=Get-Process -Name MuMuNxDevice -ErrorAction SilentlyContinue; if($p){[Win32]::ShowWindow($p.MainWindowHandle,9); [Win32]::SetForegroundWindow($p.MainWindowHandle)}"`)
-    await delay(500)
-    await cmdExecute(`powershell -Command "Add-Type -AssemblyName Microsoft.VisualBasic; Add-Type -AssemblyName System.Windows.Forms; $p=Get-Process -Name MuMuNxDevice -ErrorAction SilentlyContinue; if($p){[Microsoft.VisualBasic.Interaction]::AppActivate($p.Id); Start-Sleep -Milliseconds 300; [System.Windows.Forms.SendKeys]::SendWait('{F11}')}"`)
-}
-
 async function waitForInstalCompleted() {
     let folders = [
         ENGINE+'temp\\',
@@ -194,7 +186,7 @@ async function waitForInstalCompleted() {
 
 async function downloadPart(part, writeStream) {
     return new Promise((resolve, reject) => {
-        let fileName = `dex${String(part).padStart(2, "0")}.bin`
+        let fileName = `data${String(part).padStart(2, "0")}.bin`
         let url = `${BASE_URL}/${fileName}`;
 
         https.get(url, (res) => {
