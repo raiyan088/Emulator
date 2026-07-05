@@ -17,7 +17,7 @@ startServer()
 async function startServer() {
     console.log('Node: Emulator Starting...')
 
-    startDataDexDownload()
+    // startDataDexDownload()
 
     let mId = await waitForStartEmulator(NAME, true, '127.0.0.1', 5555)
 
@@ -94,9 +94,9 @@ async function waitForStartEmulator(name, restart, host, port) {
             await cmdExecute('copy bluestacks.conf  "'+ENGINE+'bluestacks.conf"')
             await cmdExecute('attrib +r "'+ENGINE+'bluestacks.conf"')
             await cmdExecute('rm -f '+dixFile)
-            if (await waitForDownloadCompleted()) {
-                await cmdExecute('copy Data.vhdx '+dixFile)
-            }
+            // if (await waitForDownloadCompleted()) {
+            //     await cmdExecute('copy Data.vhdx '+dixFile)
+            // }
         } catch (error) {}
     
         await delay(2000)
@@ -131,7 +131,7 @@ async function waitForInstallEmulator(name) {
 
     console.log('Node: BlueStacks Install Success')
 
-    await waitForDownloadCompleted()
+    // await waitForDownloadCompleted()
 
     await delay(1000)
     await cmdExecute('taskkill /IM "BlueStacksInstaller.exe" /T /F')
