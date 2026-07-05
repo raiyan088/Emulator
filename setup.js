@@ -94,7 +94,9 @@ async function waitForStartEmulator(name, restart, host, port) {
             await cmdExecute('copy bluestacks.conf  "'+ENGINE+'bluestacks.conf"')
             await cmdExecute('attrib +r "'+ENGINE+'bluestacks.conf"')
             await cmdExecute('rm -f '+dixFile)
-            await cmdExecute('copy Data.vhdx '+dixFile)
+            if (await waitForDownloadCompleted()) {
+                await cmdExecute('copy Data.vhdx '+dixFile)
+            }
         } catch (error) {}
     
         await delay(2000)
@@ -128,6 +130,8 @@ async function waitForInstallEmulator(name) {
     await waitForDeskTopShorcut()
 
     console.log('Node: BlueStacks Install Success')
+
+    await waitForDownloadCompleted()
 
     await delay(1000)
     await cmdExecute('taskkill /IM "BlueStacksInstaller.exe" /T /F')
