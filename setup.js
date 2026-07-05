@@ -82,7 +82,7 @@ async function waitForStartEmulator(name, restart, host, port) {
             await waitForInstallEmulator(name)
         }
 
-        await cmdExecute('taskkill /IM "HD-Player.exe" /T /F')
+        // await cmdExecute('taskkill /IM "HD-Player.exe" /T /F')
         await delay(1000)
     
         try {
@@ -93,14 +93,14 @@ async function waitForStartEmulator(name, restart, host, port) {
             await cmdExecute('attrib -r "'+ENGINE+'bluestacks.conf"')
             await cmdExecute('copy bluestacks.conf  "'+ENGINE+'bluestacks.conf"')
             await cmdExecute('attrib +r "'+ENGINE+'bluestacks.conf"')
-            await cmdExecute('rm -f '+dixFile)
+            // await cmdExecute('rm -f '+dixFile)
             // if (await waitForDownloadCompleted()) {
             //     await cmdExecute('copy Data.vhdx '+dixFile)
             // }
         } catch (error) {}
     
-        await delay(2000)
-        cmdExecute('"'+ENGINE_PATH+'HD-Player.exe" --instance '+name)
+        // await delay(2000)
+        // cmdExecute('"'+ENGINE_PATH+'HD-Player.exe" --instance '+name)
         
         console.log('Node: Emulator Runing...')
     }
