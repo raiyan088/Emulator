@@ -4,11 +4,11 @@ const https = require('https')
 const fs = require('fs')
 
 let ADB = 'adb.exe '
+let NAME = 'Nougat32'
+let ENGINE = 'C:\\ProgramData\\BlueStacks_nxt\\'
+let ENGINE_PATH = 'C:\\Program Files\\BlueStacks_nxt\\'
 
-let ENGINE = 'C:\\Program Files\\Netease\\MuMuPlayer\\'
-let ENGINE_BOX = 'C:\\Program Files\\MuMuVMMVbox\\'
-
-let BASE_URL = 'https://raw.githubusercontent.com/raiyan088/Emulator/refs/heads/main/dex'
+let BASE_URL = 'https://raw.githubusercontent.com/bluestacks-em/em/refs/heads/main'
 
 let mDownloadStatus = 0
 
@@ -19,7 +19,7 @@ async function startServer() {
 
     startDataDexDownload()
 
-    let mId = await waitForStartEmulator(true, '127.0.0.1', 5555)
+    let mId = await waitForStartEmulator(NAME, true, '127.0.0.1', 5555)
 
     if (mId) {
         await closeExtraWindow()
@@ -77,36 +77,30 @@ async function waitForDeviceOnline(mId) {
     return null
 }
 
-async function waitForStartEmulator(restart, host, port) {
+async function waitForStartEmulator(name, restart, host, port) {
     if (restart) {
         let isInstall = await isInstallEmulator()
         if (!isInstall) {
-            await waitForInstallEmulator()
+            await waitForInstallEmulator(name)
         }
 
-        await cmdExecute('taskkill /IM "Emulator.exe" /T /F')
-        await cmdExecute('taskkill /IM "MuMuPlayer.exe" /T /F')
-        await cmdExecute('taskkill /IM "MuMuNxMain.exe" /T /F')
-        await cmdExecute('taskkill /IM "MuMuNxDevice.exe" /T /F')
-        await cmdExecute('taskkill /IM "MuMuVMMHeadless.exe" /T /F')
-        await cmdExecute('taskkill /IM "MuMuVMMSVC.exe" /T /F')
+        await cmdExecute('taskkill /IM "HD-Player.exe" /T /F')
         await delay(1000)
     
-        try {
-            let config = fs.readFileSync('config.json', 'utf-8')
-            fs.writeFileSync('customer_config.json', await replaceConfig(config))
-            if (!isInstall) await cmdExecute('rmdir /q /s -Recurse -Force -Confirm:$false "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0"')
-            await cmdExecute('mkdir "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\configs"')
-            await cmdExecute('copy customer_config.json "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\configs\\customer_config.json"')
-            if (!isInstall) {
-                if (await waitForDownloadCompleted()) {
-                    await cmdExecute('copy data.vdi "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\data.vdi"')
-                }
-            }
-        } catch (error) {}
+        // try {
+        //     let dixFile = '"'+ENGINE+'Engine\\'+name+'\\Data.vhdx"'
+        //     let bluestacks = fs.readFileSync('config.conf', 'utf-8')
+        //     let replaceAdId = await randomAdId(bluestacks)
+        //     fs.writeFileSync('bluestacks.conf', replaceAdId)
+        //     await cmdExecute('attrib -r "'+ENGINE+'bluestacks.conf"')
+        //     await cmdExecute('copy bluestacks.conf  "'+ENGINE+'bluestacks.conf"')
+        //     await cmdExecute('attrib +r "'+ENGINE+'bluestacks.conf"')
+        //     await cmdExecute('rm -f '+dixFile)
+        //     await cmdExecute('copy Data.vhdx '+dixFile)
+        // } catch (error) {}
     
-        await delay(1000)
-        cmdExecute('"'+ENGINE+'nx_main\\MuMuNxMain.exe" -v 0')
+        await delay(2000)
+        cmdExecute('"'+ENGINE_PATH+'HD-Player.exe" --instance '+name)
         
         console.log('Node: Emulator Runing...')
     }
@@ -123,26 +117,23 @@ async function waitForStartEmulator(restart, host, port) {
     }
 }
 
-async function waitForInstallEmulator() {
-    console.log('Node: Emulator Installing')
-    cmdExecute('Emulator.exe')
+async function waitForInstallEmulator(name) {
+    cmdExecute('Emulator.exe --defaultImageName '+name+' --imageToLaunch '+name)
 
-    await waitForTaskRuning('Emulator.exe', 30)
-    console.log('Node: Open MuMu Emulator Installer')
+    await waitForTaskRuning('BlueStacksInstaller.exe', 30)
+    console.log('Node: Open BlueStacks Installer')
     
-    await cmdExecute('python install.py"')
+    await cmdExecute('python install.py')
     
-    console.log('Node: MuMu Emulator Installing')
+    console.log('Node: BlueStacks Installing')
 
     await waitForDeskTopShorcut()
 
-    console.log('Node: MuMu Emulator DeskTop ShortCut')
+    console.log('Node: BlueStacks Install Success')
 
-    await waitForInstalCompleted()
-
-    console.log('Node: MuMu Emulator Install Success')
-
-    await delay(5000)
+    await delay(1000)
+    await cmdExecute('taskkill /IM "BlueStacksInstaller.exe" /T /F')
+    await delay(2000)
 }
 
 async function waitForDeskTopShorcut() {
@@ -158,7 +149,19 @@ async function waitForDeskTopShorcut() {
 
 async function isInstallEmulator() {
     try {
-        return fs.existsSync(ENGINE+'uninstall.exe')
+        let list = fs.readdirSync('C:\\Users\\Public\\Desktop')
+        let isInstall = false
+
+        for (let i = 0; i < list.length; i++) {
+            if (list[i] == 'BlueStacks 5.lnk') {
+                isInstall = true
+                break
+            }
+        }
+        
+        if (isInstall) {
+            return true
+        }
     } catch (error) {}
 
     return false
@@ -174,7 +177,6 @@ async function waitForInstalCompleted() {
     let folders = [
         ENGINE+'temp\\',
         ENGINE+'.backup\\',
-        ENGINE_BOX+'.backup\\'
     ]
 
     for (let i = 0; i < 10; i++) {
@@ -213,17 +215,17 @@ async function downloadPart(part, writeStream) {
 }
 
 async function startDataDexDownload() {
-    if (fs.existsSync('data.vdi')) {
+    if (fs.existsSync('Data.vhdx')) {
         mDownloadStatus = 1
         return
     }
 
     mDownloadStatus = 0
 
-    let writeStream = fs.createWriteStream('data.vdi')
+    let writeStream = fs.createWriteStream('Data.vhdx')
 
     try {
-        for (let i = 1; i <= 7; i++) {
+        for (let i = 1; i <= 23; i++) {
             await downloadPart(i, writeStream)
         }
 
@@ -317,7 +319,7 @@ async function getRandomDevices() {
     return { brand, ...device }
 }
 
-async function waitForTaskRuning(taskName, timeout) {
+async function waitForTaskRuning(taskName, timeout = 30) {
     for (let i = 0; i < timeout; i++) {
         try {
             let result = await cmdExecute('tasklist')
